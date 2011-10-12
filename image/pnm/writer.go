@@ -5,6 +5,7 @@ import (
 	"io"
 	"fmt"
 	"image"
+	"image/color"
 )
 
 const (
@@ -39,9 +40,9 @@ func encodePBM(w io.Writer, m image.Image) os.Error {
 	if err != nil {
 		return err
 	}
-	cm := make(image.PalettedColorModel, 2)
-	cm[0] = image.GrayColor{255}
-	cm[1] = image.GrayColor{0}
+	cm := make(color.Palette, 2)
+	cm[0] = color.Gray{255}
+	cm[1] = color.Gray{0}
 
 	// write raster
 	byteCount := b.Dx() / 8
@@ -53,7 +54,7 @@ func encodePBM(w io.Writer, m image.Image) os.Error {
 	for y := b.Min.Y; y < b.Max.Y; y++ {
 		// Read row and convert to black/white.
 		for x := b.Min.X; x < b.Max.X; x++ {
-			c := cm.Convert(m.At(x, y)).(image.GrayColor)
+			c := cm.Convert(m.At(x, y)).(color.Gray)
 			row[x-b.Min.X] = c.Y
 		}
 
@@ -85,11 +86,11 @@ func encodePGM(w io.Writer, m image.Image, maxvalue int) os.Error {
 	}
 
 	// write raster
-	cm := image.GrayColorModel
+	cm := color.GrayModel
 	row := make([]uint8, b.Dx())
 	for y := b.Min.Y; y < b.Max.Y; y++ {
 		for x := b.Min.X; x < b.Max.X; x++ {
-			c := cm.Convert(m.At(x, y)).(image.GrayColor)
+			c := cm.Convert(m.At(x, y)).(color.Gray)
 			row[x-b.Min.X] = c.Y
 		}
 		if _, err := w.Write(row); err != nil {
@@ -108,12 +109,12 @@ func encodePPM(w io.Writer, m image.Image, maxvalue int) os.Error {
 	}
 
 	// write raster
-	cm := image.RGBAColorModel
+	cm := color.RGBAModel
 	row := make([]uint8, b.Dx()*3)
 	for y := b.Min.Y; y < b.Max.Y; y++ {
 		i := 0
 		for x := b.Min.X; x < b.Max.X; x++ {
-			c := cm.Convert(m.At(x, y)).(image.RGBAColor)
+			c := cm.Convert(m.At(x, y)).(color.RGBA)
 			row[i] = c.R
 			row[i+1] = c.G
 			row[i+2] = c.B
@@ -127,7 +128,7 @@ func encodePPM(w io.Writer, m image.Image, maxvalue int) os.Error {
 }
 
 // Encode writes an image.Image m to io.Writer w in PNM format.
-// 
+//
 // The specific format is determined by pnmType, this can be one of:
 //  - pnm.PBM (black/white)
 //  - pnm.PGM (grayscale)

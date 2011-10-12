@@ -3,6 +3,7 @@ package transform
 import (
 	"math"
 	"image"
+	"image/color"
 	"fmt"
 )
 
@@ -16,7 +17,7 @@ const (
 
 type WritableImage interface {
 	image.Image
-	Set(x, y int, c image.Color)
+	Set(x, y int, c color.Color)
 }
 
 func Nearest(src image.Image, transform TransformFunc, width, height, borderMethod int) image.Image {
@@ -104,14 +105,14 @@ func Bilinear(src image.Image, transform TransformFunc, width, height, borderMet
 			G += w * float64(g)
 			B += w * float64(b)
 			A += w * float64(a)
-			dst.Set(xdst, ydst, image.RGBA64Color{uint16(R), uint16(G), uint16(B), uint16(A)})
+			dst.Set(xdst, ydst, color.RGBA64{uint16(R), uint16(G), uint16(B), uint16(A)})
 		}
 	}
 	return dst
 }
 
 func bilinearRGBA(src *image.RGBA, transform TransformFunc, width, height, borderMethod int) image.Image {
-	dst := image.NewRGBA(width, height)
+	dst := image.NewRGBA(image.Rect(0, 0, width, height))
 	b := src.Bounds()
 	j := 0
 	for ydst := 0; ydst < height; ydst++ {
@@ -178,7 +179,7 @@ func bilinearRGBA(src *image.RGBA, transform TransformFunc, width, height, borde
 }
 
 func bilinearGray(src *image.Gray, transform TransformFunc, width, height, borderMethod int) image.Image {
-	dst := image.NewGray(width, height)
+	dst := image.NewGray(image.Rect(0, 0, width, height))
 	b := src.Bounds()
 	j := 0
 	for ydst := 0; ydst < height; ydst++ {
@@ -289,12 +290,12 @@ func Bicubic(src image.Image, transform TransformFunc, width, height, borderMeth
 			G += cubicSpline(dy, g0, g1, g2, g3)
 			B += cubicSpline(dy, b0, b1, b2, b3)
 			A += cubicSpline(dy, a0, a1, a2, a3)
-			R = math.Fmax(math.Fmin(R, 65535), 0)
-			G = math.Fmax(math.Fmin(G, 65535), 0)
-			B = math.Fmax(math.Fmin(B, 65535), 0)
-			A = math.Fmax(math.Fmin(A, 65535), 0)
+			R = math.Max(math.Min(R, 65535), 0)
+			G = math.Max(math.Min(G, 65535), 0)
+			B = math.Max(math.Min(B, 65535), 0)
+			A = math.Max(math.Min(A, 65535), 0)
 			fmt.Println(R, G, B, A)
-			dst.Set(xdst, ydst, image.RGBA64Color{uint16(R), uint16(G), uint16(B), uint16(A)})
+			dst.Set(xdst, ydst, color.RGBA64{uint16(R), uint16(G), uint16(B), uint16(A)})
 		}
 	}
 	return dst
@@ -304,21 +305,21 @@ func cubicSpline(x, p0, p1, p2, p3 float64) float64 {
 	return p1 + 0.5*x*(p2-p0+x*(2.0*p0-5.0*p1+4.0*p2-p3+x*(3.0*(p1-p2)+p3-p0)))
 }
 
-func getColor(src image.Image, x, y, borderMethod int) image.Color {
+func getColor(src image.Image, x, y, borderMethod int) color.Color {
 	bound := src.Bounds()
 	if x < 0 {
 		switch borderMethod {
 		case BORDER_COPY:
 			x = 0
 		default:
-			return image.RGBA64Color{}
+			return color.RGBA64{}
 		}
 	} else if x >= bound.Max.X {
 		switch borderMethod {
 		case BORDER_COPY:
 			x = bound.Max.X - 1
 		default:
-			return image.RGBA64Color{}
+			return color.RGBA64{}
 		}
 	}
 	if y < 0 {
@@ -326,14 +327,14 @@ func getColor(src image.Image, x, y, borderMethod int) image.Color {
 		case BORDER_COPY:
 			y = 0
 		default:
-			return image.RGBA64Color{}
+			return color.RGBA64{}
 		}
 	} else if y >= bound.Max.Y {
 		switch borderMethod {
 		case BORDER_COPY:
 			y = bound.Max.Y - 1
 		default:
-			return image.RGBA64Color{255, 255, 255, 0}
+			return color.RGBA64{255, 255, 255, 0}
 		}
 	}
 	return src.At(x, y)
@@ -414,19 +415,19 @@ func getGray(src *image.Gray, x, y, borderMethod int) uint8 {
 func newImage(m image.Image, width, height int) WritableImage {
 	switch m.(type) {
 	case *image.RGBA:
-		return image.NewRGBA(width, height)
+		return image.NewRGBA(image.Rect(0, 0, width, height))
 	case *image.Gray:
-		return image.NewGray(width, height)
+		return image.NewGray(image.Rect(0, 0, width, height))
 	case *image.Gray16:
-		return image.NewGray16(width, height)
+		return image.NewGray16(image.Rect(0, 0, width, height))
 	case *image.NRGBA:
-		return image.NewNRGBA(width, height)
+		return image.NewNRGBA(image.Rect(0, 0, width, height))
 	case *image.RGBA64:
-		return image.NewRGBA64(width, height)
+		return image.NewRGBA64(image.Rect(0, 0, width, height))
 	case *image.Alpha:
-		return image.NewAlpha(width, height)
+		return image.NewAlpha(image.Rect(0, 0, width, height))
 	case *image.Alpha16:
-		return image.NewAlpha16(width, height)
+		return image.NewAlpha16(image.Rect(0, 0, width, height))
 	}
-	return image.NewRGBA(width, height)
+	return image.NewRGBA(image.Rect(0, 0, width, height))
 }

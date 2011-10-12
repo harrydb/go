@@ -2,6 +2,7 @@ package gray
 
 import (
 	"image"
+	"image/color"
 )
 
 const (
@@ -33,10 +34,10 @@ func CoCos(m *image.Gray, color uint8) []CoCo {
 
 type WritableImage interface {
 	image.Image
-	Set(x, y int, c image.Color)
+	Set(x, y int, c color.Color)
 }
 
-func CoCoRemove(m WritableImage, coco CoCo, c image.Color) {
+func CoCoRemove(m WritableImage, coco CoCo, c color.Color) {
 	for _, p := range(coco.Points) {
 		m.Set(p.X, p.Y, c)
 	}
@@ -87,13 +88,13 @@ func (data *cocoData) passOne(m *image.Gray, color uint8) {
 				neighbor = data.addNeighbor(x-1, y-1, neighbor)
 				neighbor = data.addNeighbor(x+1, y-1, neighbor)
 			}
-			
+
 			if len(neighbor) == 0 {
 				data.label[pos] = pos
 				data.roots = append(data.roots, pos)
 				continue
 			}
-			
+
 			minLabel := neighbor[0]
 			for _, label := range(neighbor) {
 				if label < minLabel {
@@ -101,7 +102,7 @@ func (data *cocoData) passOne(m *image.Gray, color uint8) {
 				}
 			}
 			data.label[pos] = minLabel
-			
+
 			for _, label := range(neighbor) {
 				if label == minLabel {
 					continue

@@ -7,8 +7,7 @@ import (
 )
 
 func main() {
-	file, err := os.Open("Amsterdam-0002.ppm")
-	//file, err := os.Open("a.ppm")
+	file, err := os.Open("in.ppm")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -24,7 +23,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = pnm.Encode(outFile, img, pnm.PBM)
+	err = pnm.Encode(outFile, img, pnm.PPM)
 	if err != nil {
 		log.Fatal(err)
 	}

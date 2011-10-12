@@ -11,6 +11,7 @@ import (
 	"bufio"
 	"unicode"
 	"image"
+	"image/color"
 )
 
 type PNMConfig struct {
@@ -21,7 +22,7 @@ type PNMConfig struct {
 }
 
 func decodePlainBW(r io.Reader, c PNMConfig) (image.Image, os.Error) {
-	m := image.NewGray(c.Width, c.Height)
+	m := image.NewGray(image.Rect(0, 0, c.Width, c.Height))
 	pixelCount := len(m.Pix)
 
 	for i := 0; i < pixelCount; i++ {
@@ -39,7 +40,7 @@ func decodePlainBW(r io.Reader, c PNMConfig) (image.Image, os.Error) {
 }
 
 func decodePlainGray(r io.Reader, c PNMConfig) (image.Image, os.Error) {
-	m := image.NewGray(c.Width, c.Height)
+	m := image.NewGray(image.Rect(0, 0, c.Width, c.Height))
 	pixelCount := len(m.Pix)
 
 	for i := 0; i < pixelCount; i++ {
@@ -52,7 +53,7 @@ func decodePlainGray(r io.Reader, c PNMConfig) (image.Image, os.Error) {
 }
 
 func decodePlainGray16(r io.Reader, c PNMConfig) (image.Image, os.Error) {
-	m := image.NewGray16(c.Width, c.Height)
+	m := image.NewGray16(image.Rect(0, 0, c.Width, c.Height))
 	var col uint16
 
 	for y := 0; y < c.Height; y++ {
@@ -60,7 +61,7 @@ func decodePlainGray16(r io.Reader, c PNMConfig) (image.Image, os.Error) {
 			if _, err := fmt.Fscan(r, &col); err != nil {
 				return nil, err
 			}
-			m.Set(x, y, image.Gray16Color{col})
+			m.Set(x, y, color.Gray16{col})
 		}
 	}
 
@@ -68,7 +69,7 @@ func decodePlainGray16(r io.Reader, c PNMConfig) (image.Image, os.Error) {
 }
 
 func decodePlainRGB(r io.Reader, c PNMConfig) (image.Image, os.Error) {
-	m := image.NewRGBA(c.Width, c.Height)
+	m := image.NewRGBA(image.Rect(0, 0, c.Width, c.Height))
 	count := len(m.Pix)
 
 	for i := 0; i < count; i += 4 {
@@ -88,7 +89,7 @@ func decodePlainRGB(r io.Reader, c PNMConfig) (image.Image, os.Error) {
 }
 
 func decodePlainRGB64(r io.Reader, c PNMConfig) (image.Image, os.Error) {
-	m := image.NewRGBA64(c.Width, c.Height)
+	m := image.NewRGBA64(image.Rect(0, 0, c.Width, c.Height))
 	var cr, cg, cb uint16
 
 	for y := 0; y < c.Height; y++ {
@@ -102,7 +103,7 @@ func decodePlainRGB64(r io.Reader, c PNMConfig) (image.Image, os.Error) {
 			if _, err := fmt.Fscan(r, &cb); err != nil {
 				return nil, err
 			}
-			m.Set(x, y, image.RGBA64Color{cr, cg, cb, 0xffff})
+			m.Set(x, y, color.RGBA64{cr, cg, cb, 0xffff})
 		}
 	}
 
@@ -111,9 +112,9 @@ func decodePlainRGB64(r io.Reader, c PNMConfig) (image.Image, os.Error) {
 
 // unpackByte unpacks 8 one bit pixels from byte b into slice bit.
 //
-// The bits are unpacked such that the most significant bit becomes the 
+// The bits are unpacked such that the most significant bit becomes the
 // first value in the slice. If there are less than 8 values in bit,the
-// remaining bits are ignored. If there are more than 8 values in bit, 
+// remaining bits are ignored. If there are more than 8 values in bit,
 // these remain unchanged.
 func unpackByte(bit []uint8, b byte) {
 	n := len(bit)
@@ -129,7 +130,7 @@ func unpackByte(bit []uint8, b byte) {
 }
 
 func decodeRawBW(r io.Reader, c PNMConfig) (image.Image, os.Error) {
-	m := image.NewGray(c.Width, c.Height)
+	m := image.NewGray(image.Rect(0, 0, c.Width, c.Height))
 
 	byteCount := c.Width / 8
 	if c.Width%8 != 0 {
@@ -158,19 +159,19 @@ func decodeRawBW(r io.Reader, c PNMConfig) (image.Image, os.Error) {
 }
 
 func decodeRawGray(r io.Reader, c PNMConfig) (image.Image, os.Error) {
-	m := image.NewGray(c.Width, c.Height)
+	m := image.NewGray(image.Rect(0, 0, c.Width, c.Height))
 	_, err := io.ReadFull(r, m.Pix)
 	return m, err
 }
 
 func decodeRawGray16(r io.Reader, c PNMConfig) (image.Image, os.Error) {
-	m := image.NewGray16(c.Width, c.Height)
+	m := image.NewGray16(image.Rect(0, 0, c.Width, c.Height))
 	_, err := io.ReadFull(r, m.Pix)
 	return m, err
 }
 
 func decodeRawRGB(r io.Reader, c PNMConfig) (image.Image, os.Error) {
-	m := image.NewRGBA(c.Width, c.Height)
+	m := image.NewRGBA(image.Rect(0, 0, c.Width, c.Height))
 	count := len(m.Pix)
 	for i := 0; i < count; i += 4 {
 		pixel := m.Pix[i : i+3]
@@ -185,7 +186,7 @@ func decodeRawRGB(r io.Reader, c PNMConfig) (image.Image, os.Error) {
 }
 
 func decodeRawRGB64(r io.Reader, c PNMConfig) (image.Image, os.Error) {
-	m := image.NewRGBA(c.Width, c.Height)
+	m := image.NewRGBA(image.Rect(0, 0, c.Width, c.Height))
 	count := len(m.Pix)
 
 	for i := 0; i < count; i += 8 {
@@ -206,7 +207,7 @@ func decodePAM(r io.Reader, c PNMConfig) (image.Image, os.Error) {
 }
 
 // Decode reads a PNM image from r and returns it as an image.Image.
-// 
+//
 // The type of Image returned depends on the PNM contents:
 //  - PBM: image.Gray with black = 0 and white = 255
 //  - PGM: image.Gray or image.Gray16, values as in the file
@@ -261,7 +262,7 @@ func Decode(r io.Reader) (image.Image, os.Error) {
 // header tokens.
 //
 // The singleSpace argument is used to scan comments between the header and the
-// raster data where only a single whitespace delimiter is allowed. This 
+// raster data where only a single whitespace delimiter is allowed. This
 // prevents scanning the image data.
 func skipComments(r *bufio.Reader, singleSpace bool) (err os.Error) {
 	for {
@@ -349,7 +350,7 @@ func DecodeConfigPNM(r *bufio.Reader) (c PNMConfig, err os.Error) {
 }
 
 // DecodeConfig returns the color model and dimensions of a PNM image without
-// decoding the entire image. 
+// decoding the entire image.
 func DecodeConfig(r io.Reader) (image.Config, os.Error) {
 	br := bufio.NewReader(r)
 	c, err := DecodeConfigPNM(br)
@@ -357,21 +358,21 @@ func DecodeConfig(r io.Reader) (image.Config, os.Error) {
 		return image.Config{}, err
 	}
 
-	var cm image.ColorModel
+	var cm color.Model
 	switch c.magic {
 	case "P1", "P4":
-		cm = image.GrayColorModel
+		cm = color.GrayModel
 	case "P2", "P5":
 		if c.Maxval < 256 {
-			cm = image.GrayColorModel
+			cm = color.GrayModel
 		} else {
-			cm = image.Gray16ColorModel
+			cm = color.Gray16Model
 		}
 	case "P3", "P6":
 		if c.Maxval < 256 {
-			cm = image.RGBAColorModel
+			cm = color.RGBAModel
 		} else {
-			cm = image.RGBA64ColorModel
+			cm = color.RGBA64Model
 		}
 	}
 
