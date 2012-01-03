@@ -5,13 +5,13 @@
 package pnm
 
 import (
-	"os"
-	"io"
-	"fmt"
 	"bufio"
-	"unicode"
+	"errors"
+	"fmt"
 	"image"
 	"image/color"
+	"io"
+	"unicode"
 )
 
 type PNMConfig struct {
@@ -21,7 +21,7 @@ type PNMConfig struct {
 	magic  string
 }
 
-func decodePlainBW(r io.Reader, c PNMConfig) (image.Image, os.Error) {
+func decodePlainBW(r io.Reader, c PNMConfig) (image.Image, error) {
 	m := image.NewGray(image.Rect(0, 0, c.Width, c.Height))
 	pixelCount := len(m.Pix)
 
@@ -39,7 +39,7 @@ func decodePlainBW(r io.Reader, c PNMConfig) (image.Image, os.Error) {
 	return m, nil
 }
 
-func decodePlainGray(r io.Reader, c PNMConfig) (image.Image, os.Error) {
+func decodePlainGray(r io.Reader, c PNMConfig) (image.Image, error) {
 	m := image.NewGray(image.Rect(0, 0, c.Width, c.Height))
 	pixelCount := len(m.Pix)
 
@@ -52,7 +52,7 @@ func decodePlainGray(r io.Reader, c PNMConfig) (image.Image, os.Error) {
 	return m, nil
 }
 
-func decodePlainGray16(r io.Reader, c PNMConfig) (image.Image, os.Error) {
+func decodePlainGray16(r io.Reader, c PNMConfig) (image.Image, error) {
 	m := image.NewGray16(image.Rect(0, 0, c.Width, c.Height))
 	var col uint16
 
@@ -68,7 +68,7 @@ func decodePlainGray16(r io.Reader, c PNMConfig) (image.Image, os.Error) {
 	return m, nil
 }
 
-func decodePlainRGB(r io.Reader, c PNMConfig) (image.Image, os.Error) {
+func decodePlainRGB(r io.Reader, c PNMConfig) (image.Image, error) {
 	m := image.NewRGBA(image.Rect(0, 0, c.Width, c.Height))
 	count := len(m.Pix)
 
@@ -88,7 +88,7 @@ func decodePlainRGB(r io.Reader, c PNMConfig) (image.Image, os.Error) {
 	return m, nil
 }
 
-func decodePlainRGB64(r io.Reader, c PNMConfig) (image.Image, os.Error) {
+func decodePlainRGB64(r io.Reader, c PNMConfig) (image.Image, error) {
 	m := image.NewRGBA64(image.Rect(0, 0, c.Width, c.Height))
 	var cr, cg, cb uint16
 
@@ -129,7 +129,7 @@ func unpackByte(bit []uint8, b byte) {
 	}
 }
 
-func decodeRawBW(r io.Reader, c PNMConfig) (image.Image, os.Error) {
+func decodeRawBW(r io.Reader, c PNMConfig) (image.Image, error) {
 	m := image.NewGray(image.Rect(0, 0, c.Width, c.Height))
 
 	byteCount := c.Width / 8
@@ -158,19 +158,19 @@ func decodeRawBW(r io.Reader, c PNMConfig) (image.Image, os.Error) {
 	return m, nil
 }
 
-func decodeRawGray(r io.Reader, c PNMConfig) (image.Image, os.Error) {
+func decodeRawGray(r io.Reader, c PNMConfig) (image.Image, error) {
 	m := image.NewGray(image.Rect(0, 0, c.Width, c.Height))
 	_, err := io.ReadFull(r, m.Pix)
 	return m, err
 }
 
-func decodeRawGray16(r io.Reader, c PNMConfig) (image.Image, os.Error) {
+func decodeRawGray16(r io.Reader, c PNMConfig) (image.Image, error) {
 	m := image.NewGray16(image.Rect(0, 0, c.Width, c.Height))
 	_, err := io.ReadFull(r, m.Pix)
 	return m, err
 }
 
-func decodeRawRGB(r io.Reader, c PNMConfig) (image.Image, os.Error) {
+func decodeRawRGB(r io.Reader, c PNMConfig) (image.Image, error) {
 	m := image.NewRGBA(image.Rect(0, 0, c.Width, c.Height))
 	count := len(m.Pix)
 	for i := 0; i < count; i += 4 {
@@ -185,7 +185,7 @@ func decodeRawRGB(r io.Reader, c PNMConfig) (image.Image, os.Error) {
 	return m, nil
 }
 
-func decodeRawRGB64(r io.Reader, c PNMConfig) (image.Image, os.Error) {
+func decodeRawRGB64(r io.Reader, c PNMConfig) (image.Image, error) {
 	m := image.NewRGBA(image.Rect(0, 0, c.Width, c.Height))
 	count := len(m.Pix)
 
@@ -202,8 +202,8 @@ func decodeRawRGB64(r io.Reader, c PNMConfig) (image.Image, os.Error) {
 	return m, nil
 }
 
-func decodePAM(r io.Reader, c PNMConfig) (image.Image, os.Error) {
-	return nil, os.NewError("pnm: reading PAM images is not supported yet.")
+func decodePAM(r io.Reader, c PNMConfig) (image.Image, error) {
+	return nil, errors.New("pnm: reading PAM images is not supported yet.")
 }
 
 // Decode reads a PNM image from r and returns it as an image.Image.
@@ -213,7 +213,7 @@ func decodePAM(r io.Reader, c PNMConfig) (image.Image, os.Error) {
 //  - PGM: image.Gray or image.Gray16, values as in the file
 //  - PPM: image.RGBA or image.RGBA64, values as in the file
 //  - PAM: not supported (yet)
-func Decode(r io.Reader) (image.Image, os.Error) {
+func Decode(r io.Reader) (image.Image, error) {
 	br := bufio.NewReader(r)
 	c, err := DecodeConfigPNM(br)
 
@@ -264,11 +264,13 @@ func Decode(r io.Reader) (image.Image, os.Error) {
 // The singleSpace argument is used to scan comments between the header and the
 // raster data where only a single whitespace delimiter is allowed. This
 // prevents scanning the image data.
-func skipComments(r *bufio.Reader, singleSpace bool) (err os.Error) {
+func skipComments(r *bufio.Reader, singleSpace bool) (err error) {
+	var c byte
+
 	for {
 		// Skip whitespace
-		c, err := r.ReadByte()
-		for unicode.IsSpace(int(c)) {
+		c, err = r.ReadByte()
+		for unicode.IsSpace(rune(c)) {
 			if c, err = r.ReadByte(); err != nil {
 				return err
 			}
@@ -296,7 +298,7 @@ func skipComments(r *bufio.Reader, singleSpace bool) (err os.Error) {
 // In contrast to DecodeConfig it returns a PNMConfig struct that contains
 // some PNM specific information that may be needed for reading the image
 // or when applying (gamma) color corrections (which is not implemented).
-func DecodeConfigPNM(r *bufio.Reader) (c PNMConfig, err os.Error) {
+func DecodeConfigPNM(r *bufio.Reader) (c PNMConfig, err error) {
 	// PNM magic number
 	if _, err = fmt.Fscan(r, &c.magic); err != nil {
 		return
@@ -304,9 +306,9 @@ func DecodeConfigPNM(r *bufio.Reader) (c PNMConfig, err os.Error) {
 	switch c.magic {
 	case "P1", "P2", "P3", "P4", "P5", "P6":
 	case "P7":
-		return c, os.NewError("pnm: reading PAM images is not supported (yet).")
+		return c, errors.New("pnm: reading PAM images is not supported (yet).")
 	default:
-		return c, os.NewError("pnm: invalid format " + c.magic[0:2])
+		return c, errors.New("pnm: invalid format " + c.magic[0:2])
 	}
 
 	// Image width
@@ -314,14 +316,14 @@ func DecodeConfigPNM(r *bufio.Reader) (c PNMConfig, err os.Error) {
 		return
 	}
 	if _, err = fmt.Fscan(r, &c.Width); err != nil {
-		return c, os.NewError("pnm: could not read image width, " + err.String())
+		return c, errors.New("pnm: could not read image width, " + err.Error())
 	}
 	// Image height
 	if err = skipComments(r, false); err != nil {
 		return
 	}
 	if _, err = fmt.Fscan(r, &c.Height); err != nil {
-		return c, os.NewError("pnm: could not read image height, " + err.String())
+		return c, errors.New("pnm: could not read image height, " + err.Error())
 	}
 	// Number of colors, only for gray and color images.
 	// For black and white images this is 2, obviously.
@@ -332,7 +334,7 @@ func DecodeConfigPNM(r *bufio.Reader) (c PNMConfig, err os.Error) {
 			return
 		}
 		if _, err = fmt.Fscan(r, &c.Maxval); err != nil {
-			return c, os.NewError("pnm: could not read number of colors, " + err.String())
+			return c, errors.New("pnm: could not read number of colors, " + err.Error())
 		}
 	}
 
@@ -351,7 +353,7 @@ func DecodeConfigPNM(r *bufio.Reader) (c PNMConfig, err os.Error) {
 
 // DecodeConfig returns the color model and dimensions of a PNM image without
 // decoding the entire image.
-func DecodeConfig(r io.Reader) (image.Config, os.Error) {
+func DecodeConfig(r io.Reader) (image.Config, error) {
 	br := bufio.NewReader(r)
 	c, err := DecodeConfigPNM(br)
 	if err != nil {

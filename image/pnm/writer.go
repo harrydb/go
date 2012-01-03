@@ -1,11 +1,11 @@
 package pnm
 
 import (
-	"os"
-	"io"
+	"errors"
 	"fmt"
 	"image"
 	"image/color"
+	"io"
 )
 
 const (
@@ -33,7 +33,7 @@ func packByte(bit []uint8) (b byte) {
 	return b
 }
 
-func encodePBM(w io.Writer, m image.Image) os.Error {
+func encodePBM(w io.Writer, m image.Image) error {
 	b := m.Bounds()
 	// write header
 	_, err := fmt.Fprintf(w, "P4\n%d %d\n", b.Dx(), b.Dy())
@@ -77,7 +77,7 @@ func encodePBM(w io.Writer, m image.Image) os.Error {
 	return nil
 }
 
-func encodePGM(w io.Writer, m image.Image, maxvalue int) os.Error {
+func encodePGM(w io.Writer, m image.Image, maxvalue int) error {
 	b := m.Bounds()
 	// write header
 	_, err := fmt.Fprintf(w, "P5\n%d %d\n%d\n", b.Dx(), b.Dy(), maxvalue)
@@ -100,7 +100,7 @@ func encodePGM(w io.Writer, m image.Image, maxvalue int) os.Error {
 	return nil
 }
 
-func encodePPM(w io.Writer, m image.Image, maxvalue int) os.Error {
+func encodePPM(w io.Writer, m image.Image, maxvalue int) error {
 	b := m.Bounds()
 	// write header
 	_, err := fmt.Fprintf(w, "P6\n%d %d\n%d\n", b.Dx(), b.Dy(), maxvalue)
@@ -136,7 +136,7 @@ func encodePPM(w io.Writer, m image.Image, maxvalue int) os.Error {
 // The image m is converted if necessary.
 // Note that PGM/PPM always use 8 bits per channel at the moment and that
 // maxvalue is always 255.
-func Encode(w io.Writer, m image.Image, pnmType int) os.Error {
+func Encode(w io.Writer, m image.Image, pnmType int) error {
 	switch pnmType {
 	case PBM:
 		return encodePBM(w, m)
@@ -145,5 +145,5 @@ func Encode(w io.Writer, m image.Image, pnmType int) os.Error {
 	case PPM:
 		return encodePPM(w, m, 255)
 	}
-	return os.NewError("Invalid PNM type specified.")
+	return errors.New("Invalid PNM type specified.")
 }
