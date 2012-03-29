@@ -2,6 +2,7 @@ Package pnm
 ===========
 
 Package pnm implements a PBM, PGM and PPM image decoder and encoder.
+
 This package is compatible with Go version 1.
 
 
