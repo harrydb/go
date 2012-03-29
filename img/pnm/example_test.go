@@ -8,7 +8,7 @@ import (
 	"image"
 	"log"
 	"os"
-	"pnm"
+	"github.com/harrydb/go/img/pnm"
 )
 
 func Example() {
