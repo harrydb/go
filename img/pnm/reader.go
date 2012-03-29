@@ -1,7 +1,24 @@
-// Package pnm implements a decoder for PBM, PGM and PPM files.
+// Copyright 2012 Harry de Boer. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+// Package pnm implements a PBM, PGM and PPM image decoder and encoder.
 //
-// Specifications can be found at http://netpbm.sourceforge.net/doc/#formats
-// PAM files are currently not supported.
+// The decoder can read files in both plain and raw format with 8 or 16 bits
+// per channel. The encoder can only write files in plain format with 8 bits
+// per channel.
+//
+// To only be able to load pnm images using image.Decode, use
+//	import _ "pnm"
+//
+// Not implemented are:
+//	- Writing pnm files in raw format.
+//	- Writing images with 16 bits per channel.
+//  - Writing images with a custom Maxvalue.
+//	- Reading/and writing PAM images.
+// (I would be happy to accept patches for these.)
+//
+// Specifications can be found at http://netpbm.sourceforge.net/doc/#formats.
 package pnm
 
 import (
@@ -293,11 +310,12 @@ func skipComments(r *bufio.Reader, singleSpace bool) (err error) {
 	return
 }
 
-// DecodeConfigPNM reads the header data of PNM files.
+// DecodeConfigPNM reads and returns header data of PNM files.
 //
-// In contrast to DecodeConfig it returns a PNMConfig struct that contains
-// some PNM specific information that may be needed for reading the image
-// or when applying (gamma) color corrections (which is not implemented).
+// This may be useful to obtain the actual file type and for files that have a
+// Maxval other than the maximum supported Maxval. To apply gamma correction
+// this value is needed. Note that gamma correction is not performed by the
+// decoder.
 func DecodeConfigPNM(r *bufio.Reader) (c PNMConfig, err error) {
 	// PNM magic number
 	if _, err = fmt.Fscan(r, &c.magic); err != nil {
