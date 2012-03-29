@@ -1,8 +1,13 @@
-package gray
+// Copyright 2012 Harry de Boer. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+package grayscale
 
 import (
 	"image"
 	"image/color"
+	"image/draw"
 )
 
 const (
@@ -10,44 +15,43 @@ const (
 	NEIGHBOR8 = 1
 )
 
-type CoCo struct {
-	Points []image.Point
-	Rect image.Rectangle
-}
+// A list of all points in one connected component.
+type CoCo []image.Point
 
 type cocoData struct {
-	label []int
+	label         []int
 	width, height int
-	neighborhood int
-	roots []int
+	neighborhood  int
+	roots         []int
 }
 
-func CoCos(m *image.Gray, color uint8) []CoCo {
+// CoCos returns all connected components of the provided color.
+//
+// 4-connected or 8-connected neighborhoods can be specified using
+// grayscale.NEIGHBOR4 and grayscale.NEIGHBOR8. The algorithm is implemented
+// using a two-pass union/find approach.
+func CoCos(m *image.Gray, color uint8, neighborhood int) []CoCo {
 	var data cocoData
 	data.width = m.Rect.Max.X - m.Rect.Min.X
 	data.height = m.Rect.Max.Y - m.Rect.Min.Y
 	data.label = make([]int, data.width*data.height)
-	data.neighborhood = NEIGHBOR8
+	data.neighborhood = neighborhood
 	data.passOne(m, color)
 	return data.passTwo()
 }
 
-type WritableImage interface {
-	image.Image
-	Set(x, y int, c color.Color)
-}
-
-func CoCoRemove(m WritableImage, coco CoCo, c color.Color) {
-	for _, p := range(coco.Points) {
+// CocoRemove
+func CoCoRemove(m draw.Image, coco CoCo, c color.Color) {
+	for _, p := range coco {
 		m.Set(p.X, p.Y, c)
 	}
 }
 
-func (data *cocoData) passTwo() []CoCo{
+func (data *cocoData) passTwo() []CoCo {
 	numPixels := len(data.label)
 	count := 0
 	// renumber
-	for _, a := range(data.roots) {
+	for _, a := range data.roots {
 		root := data.label[a]
 		if root == a {
 			data.label[a] = count + numPixels
@@ -62,9 +66,9 @@ func (data *cocoData) passTwo() []CoCo{
 			continue
 		}
 		root := data.find(i) - numPixels
-		x := i%data.width
-		y := i/data.width
-		cocos[root].Points = append(cocos[root].Points, image.Point{x, y})
+		x := i % data.width
+		y := i / data.width
+		cocos[root] = append(cocos[root], image.Point{x, y})
 	}
 	return cocos
 }
@@ -79,7 +83,7 @@ func (data *cocoData) passOne(m *image.Gray, color uint8) {
 			pos := y*data.width + x
 			if row[x] != color {
 				data.label[pos] = -1
-				continue;
+				continue
 			}
 			neighbor = neighbor[:0]
 			neighbor = data.addNeighbor(x-1, y, neighbor)
@@ -96,18 +100,18 @@ func (data *cocoData) passOne(m *image.Gray, color uint8) {
 			}
 
 			minLabel := neighbor[0]
-			for _, label := range(neighbor) {
+			for _, label := range neighbor {
 				if label < minLabel {
 					minLabel = label
 				}
 			}
 			data.label[pos] = minLabel
 
-			for _, label := range(neighbor) {
+			for _, label := range neighbor {
 				if label == minLabel {
 					continue
 				}
-				data.union(minLabel, label);
+				data.union(minLabel, label)
 			}
 		}
 	}
@@ -134,12 +138,11 @@ func (data *cocoData) union(a, b int) {
 	}
 }
 
-
 func (data *cocoData) addNeighbor(x, y int, neighbor []int) []int {
 	if x < 0 || y < 0 || x >= data.width || y >= data.height {
 		return neighbor
 	}
-	label := data.label[y*data.width + x]
+	label := data.label[y*data.width+x]
 	if label == -1 {
 		return neighbor
 	}

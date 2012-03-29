@@ -1,4 +1,8 @@
-package gray
+// Copyright 2012 Harry de Boer. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+package grayscale
 
 import (
 	"image"
@@ -6,8 +10,9 @@ import (
 	"math"
 )
 
-type ConvertFunc func (color.Color) color.Gray
+type ConvertFunc func(color.Color) color.Gray
 
+// Convert converts a color image to grayscale using the provided conversion function.
 func Convert(m image.Image, convertColor ConvertFunc) *image.Gray {
 	b := m.Bounds()
 	gray := image.NewGray(b)
@@ -26,7 +31,7 @@ func Convert(m image.Image, convertColor ConvertFunc) *image.Gray {
 // The formula used for conversion is: Y = (r + g + b) / 3.
 func ToGrayAverage(c color.Color) color.Gray {
 	r, g, b, _ := c.RGBA()
-	Y := (10*(r + g + b) + 5) / 10
+	Y := (10*(r+g+b) + 5) / 10
 	return color.Gray{uint8(Y >> 8)}
 }
 
@@ -61,7 +66,7 @@ func ToGrayLuminance(c color.Color) color.Gray {
 	r := math.Pow(float64(rr), 2.2)
 	g := math.Pow(float64(gg), 2.2)
 	b := math.Pow(float64(bb), 2.2)
-	y := math.Pow(0.2125*r + 0.7154*g + 0.0721*b, 1/2.2)
+	y := math.Pow(0.2125*r+0.7154*g+0.0721*b, 1/2.2)
 	Y := uint16(y + 0.5)
 	return color.Gray{uint8(Y >> 8)}
 }
@@ -71,9 +76,9 @@ func ToGrayLuminance(c color.Color) color.Gray {
 // The formula used for conversion is: Y = (max(r,g,b) + min(r,g,b)) / 2.
 func ToGrayLightness(c color.Color) color.Gray {
 	r, g, b, _ := c.RGBA()
-	max := Max(r, Max(g, b))
-	min := Min(r, Min(g, b))
-	Y := (10*(min + max) + 5) / 20
+	max := max(r, max(g, b))
+	min := min(r, min(g, b))
+	Y := (10*(min+max) + 5) / 20
 	return color.Gray{uint8(Y >> 8)}
 }
 
@@ -82,7 +87,7 @@ func ToGrayLightness(c color.Color) color.Gray {
 // The formula used for conversion is: Y = max(r,g,b).
 func ToGrayValue(c color.Color) color.Gray {
 	r, g, b, _ := c.RGBA()
-	Y := Max(r, Max(g, b))
+	Y := max(r, max(g, b))
 	return color.Gray{uint8(Y >> 8)}
 }
 
@@ -110,14 +115,14 @@ func ToGrayAlpha(c color.Color) color.Gray {
 	return color.Gray{uint8(a >> 8)}
 }
 
-func Max(a, b uint32) uint32 {
+func max(a, b uint32) uint32 {
 	if a > b {
 		return a
 	}
 	return b
 }
 
-func Min(a, b uint32) uint32 {
+func min(a, b uint32) uint32 {
 	if a < b {
 		return a
 	}
