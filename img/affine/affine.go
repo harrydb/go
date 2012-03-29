@@ -1,29 +1,28 @@
-// Package transform provides transformations for images of type image.Image.
+// Copyright 2012 Harry de Boer. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+// Package affine provides transformations on images such as rotate, scale and
+// shear.
 //
 // The affine transformations do not change the image size, they operate on the
 // content only. Implemented affine transformations: translate, zoom, shear and
 // rotate.
-// 
+//
 // Interpolation functions: Nearest neighbor and Bilinear
 //
-// Example 1, simple affine transform:
-// var m image.Image
-// // load image
-// mNew := transform.Rotate(m, math.Pi/6)
-// 
-// Example 2, chained affine transforms
-// t := transform.NewAffineMatrix()
-// xcenter := float64(m.Bounds().Dx()) / 2
-// ycenter := float64(m.Bounds().Dy()) / 2
-// t.AddZoom(0.25, 0.25, xcenter/2, ycenter)
-// t.AddRotation(math.Pi/2, xcenter, ycenter)
-// m = transform.Apply(t, m, transform.Bilinear)
+// There is experimental Bicubic interpolation, but it has bugs.
+// It seems to work fine for Scale() and ScaleFactor though.
 //
-package transform
+// Note: that all the functionality of this package is also available in
+// graphics-go: https://code.google.com/p/graphics-go/.
+// This library was written when graphics-go did not have affine transforms
+// yet. You probably want to use graphics-go now.
+package affine
 
 import (
-	"math"
 	"image"
+	"math"
 )
 
 type AffineMatrix [9]float64
@@ -48,7 +47,8 @@ func Translate(m image.Image, tx, ty float64) image.Image {
 }
 
 // Zoom returns image m zoomed horizontally by sx and vertically by sy.
-// Note: this function scales the content, not the image itself. If you want to 
+//
+// Note: this function scales the content, not the image itself. If you want to
 // change the image size, use transform.Scale instead.
 //
 // The interpolation function used is transform.Bilinear.
@@ -71,14 +71,14 @@ func Shear(m image.Image, hx, hy float64) image.Image {
 	return Apply(a, m, Bilinear)
 }
 
-// Rotate returns image m rotated around the center by theta.
+// Rotate returns image m rotated around the center by θ radians.
 //
 // The interpolation function used is transform.Bilinear.
-func Rotate(m image.Image, theta float64) image.Image {
+func Rotate(m image.Image, θ float64) image.Image {
 	b := m.Bounds()
 	xcenter := float64(b.Dx()) / 2
 	ycenter := float64(b.Dy()) / 2
-	a := rotationMatrix(theta, xcenter, ycenter)
+	a := rotationMatrix(θ, xcenter, ycenter)
 	return Apply(a, m, Bilinear)
 }
 
@@ -103,22 +103,23 @@ func (a *AffineMatrix) AddShear(hx, hy, xcenter, ycenter float64) {
 	a.mul(shearMatrix(hx, hy, xcenter, ycenter))
 }
 
-// AddRotation adds rotation by theta to AffineMatrix a.
-func (a *AffineMatrix) AddRotation(theta, xcenter, ycenter float64) {
-	a.mul(rotationMatrix(theta, xcenter, ycenter))
+// AddRotation adds rotation by θ radians to AffineMatrix a.
+func (a *AffineMatrix) AddRotation(θ, xcenter, ycenter float64) {
+	a.mul(rotationMatrix(θ, xcenter, ycenter))
 }
 
 // Apply applies affine transformation t to image.Image m.
 //
 // InterpolationFunc f is the interpolation function to be used, thin can be
 // transform.Bilinear, transform.Nearest or a custom interpolation function.
+// Note: affine transforms do not change the canvas size of the image.
 func Apply(a AffineMatrix, src image.Image, interpolate InterpolationFunc) image.Image {
 	// Create closure over AffineMatrix a
 	t := func(x, y int) (float64, float64) {
-			X := float64(x) + 0.5
-			Y := float64(y) + 0.5
-			nx := X*a[0] + Y*a[1] + a[2]
-			ny := X*a[3] + Y*a[4] + a[5]
+		X := float64(x) + 0.5
+		Y := float64(y) + 0.5
+		nx := X*a[0] + Y*a[1] + a[2]
+		ny := X*a[3] + Y*a[4] + a[5]
 		return nx, ny
 	}
 	return interpolate(src, t, src.Bounds().Dx(), src.Bounds().Dy(), BORDER_TRANSPARENT)
@@ -128,7 +129,7 @@ func Apply(a AffineMatrix, src image.Image, interpolate InterpolationFunc) image
 //            [1, 0, tx]
 // T(tx,ty) = [0, 1, ty]
 //            [0, 0, 1]
-// 
+//
 // Inverse mapping translation matrix:
 //             [1, 0, -tx]
 // T'(tx,ty) = [0, 1, -ty]
@@ -147,7 +148,7 @@ func translationMatrix(tx, ty float64) AffineMatrix {
 //            [sx, 0 , 0]
 // S(sx,sy) = [0 , sy, 0]
 //            [0 , 0 , 1]
-// 
+//
 // Inverse mapping zoom (scale) matrix:
 //             [1/sx, 0   , 0]
 // S'(sx,sy) = [0   , 1/sy, 0]
@@ -169,7 +170,7 @@ func scaleMatrix(sx, sy, xcenter, ycenter float64) AffineMatrix {
 //            [1, hx, 0]
 // H(hx,hy) = [hy, 1, 0]
 //            [0 , 0, 1]
-// 
+//
 // Inverse mapping shear matrix:
 //             [1  ,-hx, 0]
 // H'(hx,hy) = [-hy, 1 , 0] / (1 - hx*hy)
@@ -192,20 +193,20 @@ func shearMatrix(hx, hy, xcenter, ycenter float64) AffineMatrix {
 // rotationMatrix returns an AffineMatrix for rotation around xcenter and ycenter.
 //
 // Normal rotation matrix:
-//            [cos(theta), sin(theta), 0]
-// R(theta) = [-sin(theta), cos(theta), 0]
+//            [cos(θ), sin(θ), 0]
+// R(theta) = [-sin(θ), cos(θ), 0]
 //            [0         , 0          , 1]
-// 
+//
 // Inverse mapping rotation matrix:
-// R'(theta) = R(-theta)
-func rotationMatrix(theta, xcenter, ycenter float64) AffineMatrix {
+// R'(θ) = R(-θ)
+func rotationMatrix(θ, xcenter, ycenter float64) AffineMatrix {
 	r := translationMatrix(-xcenter, -ycenter)
 	var rr AffineMatrix
 	// use inverse mapping
-	rr[0] = math.Cos(theta) // cos(-theta) == cos(theta)
-	rr[1] = math.Sin(theta) // -sin(-theta) == sin(theta)
-	rr[3] = math.Sin(-theta)
-	rr[4] = math.Cos(theta) // cos(-theta) == cos(theta)
+	rr[0] = math.Cos(θ) // cos(-θ) == cos(θ)
+	rr[1] = math.Sin(θ) // -sin(-θ) == sin(θ)
+	rr[3] = math.Sin(-θ)
+	rr[4] = math.Cos(θ) // cos(-θ) == cos(θ)
 	rr[8] = 1
 	r.mul(rr)
 	r.mul(translationMatrix(xcenter, ycenter))

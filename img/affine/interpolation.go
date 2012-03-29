@@ -1,25 +1,32 @@
-package transform
+// Copyright 2012 Harry de Boer. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+package affine
 
 import (
-	"math"
 	"image"
 	"image/color"
-	"fmt"
+	"image/draw"
+	"math"
 )
 
+// TransformFunc is the type of a function that translates destination
+// coordinates to source coordinates.
 type TransformFunc func(int, int) (float64, float64)
+
+// InterpolationFunc is the type of a function that applies a transformation
+// using a specific type of interpolation.
 type InterpolationFunc func(image.Image, TransformFunc, int, int, int) image.Image
 
 const (
+	// Pixels beyond the border are transparent.
 	BORDER_TRANSPARENT = 0
-	BORDER_COPY        = 1
+	// Pixels beyond the border are the same as the closest border.
+	BORDER_COPY = 1
 )
 
-type WritableImage interface {
-	image.Image
-	Set(x, y int, c color.Color)
-}
-
+// Nearest performs nearest neighbor interpolation.
 func Nearest(src image.Image, transform TransformFunc, width, height, borderMethod int) image.Image {
 	dst := newImage(src, width, height)
 	b := src.Bounds()
@@ -44,6 +51,7 @@ func Nearest(src image.Image, transform TransformFunc, width, height, borderMeth
 	return dst
 }
 
+// Nearest performs bilinear interpolation.
 func Bilinear(src image.Image, transform TransformFunc, width, height, borderMethod int) image.Image {
 	// Fast path for certain image types.
 	switch img := src.(type) {
@@ -222,6 +230,8 @@ func bilinearGray(src *image.Gray, transform TransformFunc, width, height, borde
 	return dst
 }
 
+// Bicubic is experimental. I advise not to use it as it has bugs, although it
+// seems to work correctly for Scale() and ScaleFactor.
 func Bicubic(src image.Image, transform TransformFunc, width, height, borderMethod int) image.Image {
 	dst := newImage(src, width, height)
 	b := src.Bounds()
@@ -252,7 +262,6 @@ func Bicubic(src image.Image, transform TransformFunc, width, height, borderMeth
 			y += b.Min.Y
 			// Calculate new color, add 0.5 to round to nearest integer.
 			var R, G, B, A float64 = 0.5, 0.5, 0.5, 0.5
-			fmt.Println(xdst, ydst, " -> ", X, Y, x, y, dx, dy)
 			r00, g00, b00, a00 := getColor(src, x-1, y-1, borderMethod).RGBA()
 			r10, g10, b10, a10 := getColor(src, x+0, y-1, borderMethod).RGBA()
 			r20, g20, b20, a20 := getColor(src, x+1, y-1, borderMethod).RGBA()
@@ -269,7 +278,6 @@ func Bicubic(src image.Image, transform TransformFunc, width, height, borderMeth
 			r13, g13, b13, a13 := getColor(src, x+0, y+2, borderMethod).RGBA()
 			r23, g23, b23, a23 := getColor(src, x+1, y+2, borderMethod).RGBA()
 			r33, g33, b33, a33 := getColor(src, x+2, y+2, borderMethod).RGBA()
-			fmt.Println(r11, g11, b11, a11)
 			r0 := cubicSpline(dx, float64(r00), float64(r10), float64(r20), float64(r30))
 			g0 := cubicSpline(dx, float64(g00), float64(g10), float64(g20), float64(g30))
 			b0 := cubicSpline(dx, float64(b00), float64(b10), float64(b20), float64(b30))
@@ -294,7 +302,6 @@ func Bicubic(src image.Image, transform TransformFunc, width, height, borderMeth
 			G = math.Max(math.Min(G, 65535), 0)
 			B = math.Max(math.Min(B, 65535), 0)
 			A = math.Max(math.Min(A, 65535), 0)
-			fmt.Println(R, G, B, A)
 			dst.Set(xdst, ydst, color.RGBA64{uint16(R), uint16(G), uint16(B), uint16(A)})
 		}
 	}
@@ -412,7 +419,7 @@ func getGray(src *image.Gray, x, y, borderMethod int) uint8 {
 	return src.Pix[i]
 }
 
-func newImage(m image.Image, width, height int) WritableImage {
+func newImage(m image.Image, width, height int) draw.Image {
 	switch m.(type) {
 	case *image.RGBA:
 		return image.NewRGBA(image.Rect(0, 0, width, height))
