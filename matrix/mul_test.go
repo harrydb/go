@@ -9,7 +9,7 @@ import (
 	"math/rand"
 	"testing"
 	"time"
-	gomatrix "code.google.com/gomatrix"
+	gomatrix "code.google.com/p/gomatrix/matrix"
 	//gomatrix "harrydb1984-gomatrix/matrix"
 )
 
