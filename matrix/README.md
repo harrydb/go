@@ -37,7 +37,7 @@ efficient and support non-square matrices. This is not implemented.
 
 ### Installation
 
-	go install github.com/harrydb/go/matrix
+	go get github.com/harrydb/go/matrix
 
 
 ### Documention

@@ -9,8 +9,8 @@ import (
 	"math/rand"
 	"testing"
 	"time"
-	//gomatrix "code.google.com/p/gomatrix/matrix"
-	gomatrix "harrydb1984-gomatrix/matrix"
+	gomatrix "code.google.com/p/gomatrix/matrix"
+	//gomatrix "harrydb1984-gomatrix/matrix"
 )
 
 const ε = 10e-12
