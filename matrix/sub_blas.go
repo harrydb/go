@@ -12,31 +12,31 @@ func MinusBLAS(A, B *Matrix) *Matrix {
 	return C
 }
 
-// Subtract calculates A = A - B.
-func (A *Matrix) SubBLAS(B *Matrix) {
+// Subtract calculates A = A - B and returns A.
+func (A *Matrix) SubBLAS(B *Matrix) *Matrix {
 
 	// Normal matrices.
 	if A.stride == A.width && B.stride == B.width {
 		blas.Daxpy(len(A.data), -1.0, B.data, 1, A.data, 1)
-		return
+		return A
 	}
 
 	// Submatrices.
 	for i := 0; i < A.height; i++ {
 		blas.Daxpy(A.width, -1.0, B.Row(i), 1, A.Row(i), 1)
 	}
+	return A
 }
 
 
-// Minus calculates C = A - B.
-func (C *Matrix) MinusBLAS(A, B *Matrix) {
+// Minus calculates C = A - B and returns C.
+func (C *Matrix) MinusBLAS(A, B *Matrix) *Matrix {
 
 	if C == B {
 		C.ScaleBLAS(-1)
-		C.AddBLAS(A)
-		return
+		return C.AddBLAS(A)
 	}
 
-	C.CopyBLAS(A)
-	C.SubBLAS(B)
+	C.Copy(A)
+	return C.SubBLAS(B)
 }

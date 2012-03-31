@@ -18,9 +18,9 @@ type Matrix struct {
 func (a *Matrix) String() string {
 	buffer := bytes.NewBufferString("")
 
-	for y := 0; y < a.height; y++ {
-		for x := 0; x < a.width; x++ {
-			fmt.Fprint(buffer, a.At(x, y), " ")
+	for i := 0; i < a.height; i++ {
+		for j := 0; j < a.width; j++ {
+			fmt.Fprint(buffer, a.At(i, j), " ")
 		}
 		fmt.Fprintln(buffer)
 	}

@@ -8,44 +8,45 @@ import "github.com/ziutek/blas"
 
 // MulBLAS returns A * B.
 func MulBLAS(A, B *Matrix) *Matrix {
-	C := Zeros(A.height, B.width)
-	C.MulAddBLAS(A, B)
-	return C
+	return Zeros(A.height, B.width).MulAddBLAS(A, B)
 }
 
 // MulBLAS calculates C = A * B.
-func (C *Matrix) MulBLAS(A, B *Matrix) {
-	for i := 0; i < C.height; i++ {
+func (C *Matrix) MulBLAS(A, B *Matrix) *Matrix {
+	for i := 0; i < A.height; i++ {
 		Ci := C.Row(i)
 		for k := range Ci {
 			Ci[k] = 0
 		}
 		for j, aij := range A.Row(i) {
-			// Ci = aij * Bj
+			// Ci += aij * Bj
 			blas.Daxpy(C.width, aij, B.Row(j), 1, Ci, 1)
 		}
 	}
+	return C
 }
 
 // MulAddBLAS calculates C = C + A * B.
-func (C *Matrix) MulAddBLAS(A, B *Matrix) {
-	for i := 0; i < C.height; i++ {
+func (C *Matrix) MulAddBLAS(A, B *Matrix) *Matrix {
+	for i := 0; i < A.height; i++ {
 		Ci := C.Row(i)
 		for j, aij := range A.Row(i) {
 			// Ci = Ci + aij * Bj
 			blas.Daxpy(C.width, aij, B.Row(j), 1, Ci, 1)
 		}
 	}
+	return C
 }
 
 // MulSubBLAS calculates C = C - A * B.
-func (C *Matrix) MulSubBLAS(A, B *Matrix) {
-	for i := 0; i < C.height; i++ {
+func (C *Matrix) MulSubBLAS(A, B *Matrix) *Matrix {
+	for i := 0; i < A.height; i++ {
 		Ci := C.Row(i)
 		for j, aij := range A.Row(i) {
 			// Ci = Ci - aij * Bj
 			blas.Daxpy(C.width, -aij, B.Row(j), 1, Ci, 1)
 		}
 	}
+	return C
 }
 

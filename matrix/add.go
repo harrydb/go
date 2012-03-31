@@ -6,20 +6,18 @@ package matrix
 
 // Plus returns A + B.
 func Plus(A, B *Matrix) *Matrix {
-	 C := Zeros(A.height, A.width)
-	 C.Plus(A, B)
-	return C
+	 return Zeros(A.height, A.width).Plus(A, B)
 }
 
-// Add calculates A = A + B.
-func (A *Matrix) Add(B *Matrix) {
+// Add calculates A = A + B and returns A.
+func (A *Matrix) Add(B *Matrix) *Matrix {
 
 	// Normal matrices.
 	if A.stride == A.width && B.stride == B.width {
 		for i, bi := range B.data {
 			A.data[i] += bi
 		}
-		return
+		return A
 	}
 
 	// Submatrices.
@@ -29,17 +27,19 @@ func (A *Matrix) Add(B *Matrix) {
 			Ai[j] += bij
 		}
 	}
+
+	return A
 }
 
-// Plus calculates C = A + B.
-func (C *Matrix) Plus(A, B *Matrix) {
+// Plus calculates C = A + B and returns C.
+func (C *Matrix) Plus(A, B *Matrix) *Matrix  {
 
 	// Normal matrices.
 	if A.stride == A.width && B.stride == B.width {
 		for i, ai := range A.data {
 			C.data[i] = ai + B.data[i]
 		}
-		return
+		return C
 	}
 
 	// SubMatrices.
@@ -50,4 +50,6 @@ func (C *Matrix) Plus(A, B *Matrix) {
 			k++
 		}
 	}
+
+	return C
 }

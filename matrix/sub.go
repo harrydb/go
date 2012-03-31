@@ -11,15 +11,15 @@ func Minus(A, B *Matrix) *Matrix {
 	return C
 }
 
-// Subtract calculates A = A - B.
-func (A *Matrix) Sub(B *Matrix) {
+// Subtract calculates A = A - B and returns A.
+func (A *Matrix) Sub(B *Matrix) *Matrix {
 
 	// Normal matrices.
 	if A.stride == A.width && B.stride == B.width {
 		for i, bi := range B.data {
 			A.data[i] -= bi
 		}
-		return
+		return A
 	}
 
 	// Submatrices.
@@ -29,17 +29,18 @@ func (A *Matrix) Sub(B *Matrix) {
 			Ai[j] -= bij
 		}
 	}
+	return A
 }
 
-// Minus calculates C = A - B.
-func (C *Matrix) Minus(A, B *Matrix) {
+// Minus calculates C = A - B and returns C.
+func (C *Matrix) Minus(A, B *Matrix) *Matrix {
 
 	// Normal matrices.
 	if A.stride == A.width && B.stride == B.width {
 		for i, ai := range A.data {
 			C.data[i] = ai - B.data[i]
 		}
-		return
+		return C
 	}
 
 	// SubMatrices.
@@ -50,4 +51,5 @@ func (C *Matrix) Minus(A, B *Matrix) {
 			k++
 		}
 	}
+	return C
 }

@@ -6,14 +6,12 @@ package matrix
 
 // MulSimple returns A * B.
 func MulSimple(A, B *Matrix) *Matrix {
-	C := Zeros(A.height, B.width)
-	C.MulSimple(A, B)
-	return C
+	return Zeros(A.height, B.width).MulSimple(A, B)
 }
 
-// MulSimple calculates C = A * B.
-func (C *Matrix) MulSimple(A, B *Matrix) {
-	for i := 0; i < C.height; i++ {
+// MulSimple calculates C = A * B and returns C.
+func (C *Matrix) MulSimple(A, B *Matrix) *Matrix {
+	for i := 0; i < A.height; i++ {
 		Ci := C.Row(i)
 		for k := range Ci {
 			Ci[k] = 0
@@ -24,11 +22,12 @@ func (C *Matrix) MulSimple(A, B *Matrix) {
 			}
 		}
 	}
+	return C
 }
 
-// MulAddSimple calculates C = C + A * B.
-func (C *Matrix) MulAddSimple(A, B *Matrix) {
-	for i := 0; i < C.height; i++ {
+// MulAddSimple calculates C = C + A * B and returns C.
+func (C *Matrix) MulAddSimple(A, B *Matrix) *Matrix{
+	for i := 0; i < A.height; i++ {
 		Ci := C.Row(i)
 
 		for j, aij := range A.Row(i) {
@@ -37,17 +36,18 @@ func (C *Matrix) MulAddSimple(A, B *Matrix) {
 			}
 		}
 	}
+	return C
 }
 
-// MulSubSimple calculates C = C - A * B.
-func (C *Matrix) MulSubSimple(A, B *Matrix) {
-	for i := 0; i < C.height; i++ {
+// MulSubSimple calculates C = C - A * B and returns C.
+func (C *Matrix) MulSubSimple(A, B *Matrix) *Matrix {
+	for i := 0; i < A.height; i++ {
 		Ci := C.Row(i)
-
 		for j, aij := range A.Row(i) {
 			for k, bjk := range B.Row(j) {
 				Ci[k] -= aij * bjk
 			}
 		}
 	}
+	return C
 }

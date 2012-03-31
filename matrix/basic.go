@@ -37,23 +37,28 @@ func New(m, n int, data []float64) *Matrix {
 	return &Matrix{m, n, n, data}
 }
 
+// Clear sets all elements to zero.
+func (A *Matrix) Clear() {
+	for i := 0; i < A.height; i++ {
+		Ai := A.Row(i)
+		for j := range Ai {
+			Ai[j] = 0
+		}
+	}
+}
+
 // Copy the contents of B to A.
 func (A *Matrix) Copy(B *Matrix) {
 
 	// Normal matrices.
 	if B.stride == B.width {
-		for i, bi := range B.data {
-			A.data[i] = bi
-		}
+		copy(A.data, B.data)
 		return
 	}
 
 	// Submatrices.
 	for i := 0; i < A.height; i++ {
-		Ai := A.Row(i)
-		for j, bij := range B.Row(i) {
-			Ai[j] = bij
-		}
+		copy(A.Row(i), B.Row(i))
 	}
 }
 
@@ -63,24 +68,24 @@ func (A *Matrix) SubMatrix(i, j, m, n int) *Matrix {
 	return &Matrix{m, n, A.stride, A.data[i * A.stride + j: (i + m - 1) * A.stride + (j + n)]}
 }
 
-// At returns the value of the matrix at position (x, y)
-func (A *Matrix) At(x, y int) float64 {
-	return A.data[y * A.stride + x]
+// At returns the value of the matrix at row i and column j.
+func (A *Matrix) At(i, j int) float64 {
+	return A.data[i * A.stride + j]
 }
 
-// Set changes the value of the matrix at position (x, y).
-func (A *Matrix) Set(x, y int, v float64){
-	A.data[y * A.stride + x] = v
-}
-
-// Rows returns the number of rows.
-func (A *Matrix) Rows() int {
-	return A.height
+// Set changes the value of the matrix at row i and column j.
+func (A *Matrix) Set(i, j int, v float64){
+	A.data[i * A.stride + j] = v
 }
 
 // Row returns the ith row.
 func (A *Matrix) Row(i int) []float64 {
 	return A.data[i * A.stride : i * A.stride + A.width]
+}
+
+// Rows returns the number of rows.
+func (A *Matrix) Rows() int {
+	return A.height
 }
 
 // Cols returns the number of rows.
@@ -101,7 +106,7 @@ func (A *Matrix) RowVectors() [][]float64 {
 	return rows
 }
 
-// Transpose return the matrix transpose of A.
+// Transpose returns the matrix transpose of A.
 func Transpose(A *Matrix) *Matrix {
 	B := Zeros(A.width, A.height)
 	offset := 0

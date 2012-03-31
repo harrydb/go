@@ -6,15 +6,9 @@ package matrix
 
 import (
 	"testing"
+	"math"
 	"math/rand"
 )
-
-// Copy creates a new matrix with identical content.
-func Copy(A *Matrix) *Matrix {
-	B := Zeros(A.height, A.width)
-	B.Add(A)
-	return B
-}
 
 func TestSubMatrix(t *testing.T) {
 	a := randomMatrix(4, 4)
@@ -22,20 +16,11 @@ func TestSubMatrix(t *testing.T) {
 
 	for i := 0; i < c.height; i++ {
 		for j := 0; j < c.width; j++ {
-			if a.At(j + 1, i + 1) != c.At(j, i) {
-				t.Fatalf("Element a(%d,%d) should be the same as b(%d, %d)", j, i, i, j)
+			if a.At(i + 1, j + 1) != c.At(i, j) {
+				t.Fatalf("Element a(%d,%d) should be the same as b(%d, %d)", i, j, j, i)
 			}
 		}
 	}
-}
-
-func TestAdd(t *testing.T) {
-	n := 4
-	a := randomMatrix(n, n)
-	b := randomMatrix(n, n)
-	c := a.SubMatrix(2, 2, 2, 2)
-	d := b.SubMatrix(2, 2, 2, 2)
-	c.Add(d)
 }
 
 func TestIdentity(t *testing.T) {
@@ -45,12 +30,12 @@ func TestIdentity(t *testing.T) {
 	for i := 0; i < n; i++ {
 		for j := 0; j < n; j++ {
 			if i == j {
-				if I.At(j, i) != 1.0 {
-					t.Fatalf("Element at (%d,%d) should be 1.0", j, i)
+				if I.At(i, j) != 1.0 {
+					t.Fatalf("Element at (%d,%d) should be 1.0", i, j)
 				}
 			} else {
-				if I.At(j, i) != 0.0 {
-					t.Fatalf("Element at (%d,%d) should be 0.0", j, i)
+				if I.At(i, j) != 0.0 {
+					t.Fatalf("Element at (%d,%d) should be 0.0", i, j)
 				}
 			}
 		}
@@ -61,24 +46,42 @@ func TestIdentity(t *testing.T) {
 func TestTranspose(t *testing.T) {
 	m := 2
 	n := 3
-	a := randomMatrix(m, n)
-	b := Transpose(a)
+	A := randomMatrix(m, n)
+	B := Transpose(A)
 
 	for i := 0; i < m; i++ {
 		for j := 0; j < n; j++ {
-			if a.At(j, i) != b.At(i, j) {
-				t.Fatalf("Element a(%d,%d) should be the same as b(%d, %d)", j, i, i, j)
+			if A.At(i, j) != B.At(j, i) {
+				t.Fatalf("Element A(%d,%d) should be the same as B(%d, %d)", i, j, j, i)
 			}
 		}
 	}
 }
 
-func randomMatrix(m, n int) (a *Matrix) {
-	a = Zeros(m, n)
-
-	for i := range a.data {
-		a.data[i] = rand.Float64()
-	}
-
-	return a
+func randomMatrix(m, n int) (A *Matrix) {
+	A = Zeros(m, n)
+	A.randomize()
+	return A
 }
+
+func (A *Matrix) randomize() {
+	for i := range A.data {
+		A.data[i] = rand.Float64()
+	}
+}
+
+func equal(A, B *Matrix, ε float64, t *testing.T) bool {
+	if A.height != B.height || A.width != B.width {
+		t.Fatalf("Wrong result: different size A: %d x %d \n A: %d x %d \n", A.height, A.width, B.height, B.width)
+	}
+	for i := 0; i < A.height; i++ {
+		for j := 0; j < A.width; j++ {
+			if math.Abs(A.At(i, j) - B.At(i,j)) > ε {
+				t.Logf("Wrong result: A(%d, %d) = %v \t B(%d, %d) = %v \n", i, j, A.At(i, j), i, j, B.At(i, j))
+				return false
+			}
+		}
+	}
+	return true
+}
+
