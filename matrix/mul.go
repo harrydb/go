@@ -4,50 +4,36 @@
 
 package matrix
 
-// MulSimple returns A * B.
-func MulSimple(A, B *Matrix) *Matrix {
-	return Zeros(A.height, B.width).MulSimple(A, B)
-}
+import "runtime"
 
-// MulSimple calculates C = A * B and returns C.
-func (C *Matrix) MulSimple(A, B *Matrix) *Matrix {
-	for i := 0; i < A.height; i++ {
-		Ci := C.Row(i)
-		for k := range Ci {
-			Ci[k] = 0
-		}
-		for j, aij := range A.Row(i) {
-			for k, bjk := range B.Row(j) {
-				Ci[k] += aij * bjk
-			}
+// Mul returns A * B.
+func Mul(A, B *Matrix) *Matrix {
+	n := (A.height / 2) + (A.width / 2)
+
+	if runtime.GOMAXPROCS(0) > 1 {
+		switch {
+			case n < 32: return MulBLAS(A, B)
+			default: return MulStrassenPar(A, B)
 		}
 	}
-	return C
+
+	if n < 80 {
+		return MulBLAS(A, B)
+	}
+	return MulDouglas(A, B)
 }
 
-// MulAddSimple calculates C = C + A * B and returns C.
-func (C *Matrix) MulAddSimple(A, B *Matrix) *Matrix{
-	for i := 0; i < A.height; i++ {
-		Ci := C.Row(i)
-
-		for j, aij := range A.Row(i) {
-			for k, bjk := range B.Row(j) {
-				Ci[k] += aij * bjk
-			}
-		}
-	}
-	return C
+// Mul calculates C = A * B and returns C.
+func (C *Matrix) Mul(A, B *Matrix) *Matrix {
+	return C.MulBLAS(A, B)
 }
 
-// MulSubSimple calculates C = C - A * B and returns C.
-func (C *Matrix) MulSubSimple(A, B *Matrix) *Matrix {
-	for i := 0; i < A.height; i++ {
-		Ci := C.Row(i)
-		for j, aij := range A.Row(i) {
-			for k, bjk := range B.Row(j) {
-				Ci[k] -= aij * bjk
-			}
-		}
-	}
-	return C
+// MulAdd calculates C = C + A * B and returns C.
+func (C *Matrix) MulAdd(A, B *Matrix) *Matrix{
+	return C.MulAddBLAS(A, B)
+}
+
+// MulSub calculates C = C - A * B and returns C.
+func (C *Matrix) MulSub(A, B *Matrix) *Matrix {
+	return C.MulSubBLAS(A, B)
 }

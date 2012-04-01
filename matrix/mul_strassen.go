@@ -4,17 +4,21 @@
 
 package matrix
 
-// MulStrassen returns C = A * B.
-// See Strassen, 1969.
+// MulStrassen returns A * B.
+//
+// Original paper: Gaussian Elimination is not Optimal.
+//                 Volker Strassen, 1969.
+//
+// This implementation is not optimized, it serves as a reference for testing.
 func MulStrassen(A, B *Matrix) *Matrix {
-	return Zeros(A.height, A.width).MulAddStrassen(A, B)
+	return Zeros(A.height, B.width).MulStrassen(A, B)
 }
 
-// MulAddStrassen returns C = C + A * B.
-func (C *Matrix) MulAddStrassen(A, B *Matrix) *Matrix {
+// MulStrassen calculates C = A * B and returs C.
+func (C *Matrix) MulStrassen(A, B *Matrix) *Matrix {
 
 	if A.width < 80 || A.height != A.width || A.height % 2 != 0 {
-		return C.MulAddBLAS(A, B)
+		return C.MulBLAS(A, B)
 	}
 
 	m := A.height / 2
@@ -31,20 +35,17 @@ func (C *Matrix) MulAddStrassen(A, B *Matrix) *Matrix {
 	C21 := C.SubMatrix(m, 0, m, m)
 	C22 := C.SubMatrix(m, m, m, m)
 
-	M1 := Zeros(m, m)
-	M2 := Zeros(m, m)
-	M3 := Zeros(m, m)
-	M1.MulAddStrassen(Plus(A11, A22), Plus(B11, B22))
-	M2.MulAddStrassen(Plus(A21, A22), B11)
-	M3.MulAddStrassen(A11, Minus(B12, B22))
-	C21.MulAddStrassen(A22, Minus(B21, B11))
-	C12.MulAddStrassen(Plus(A11, A12), B22)
-	C22.MulAddStrassen(Minus(A21, A11), Plus(B11, B12))
-	C11.MulAddStrassen(Minus(A12, A22), Plus(B21, B22))
+	M1 := MulStrassen(Plus(A11, A22), Plus(B11, B22))
+	M2 := MulStrassen(Plus(A21, A22), B11)
+	M3 := MulStrassen(A11, Minus(B12, B22))
+	M4 := MulStrassen(A22, Minus(B21, B11))
+	M5 := MulStrassen(Plus(A11, A12), B22)
+	M6 := MulStrassen(Minus(A21, A11), Plus(B11, B12))
+	M7 := MulStrassen(Minus(A12, A22), Plus(B21, B22))
 
-	C11.Add(M1).Add(C21).Sub(C12);
-	C12.Add(M3);
-	C21.Add(M2);
-	C22.Add(M1).Sub(M2).Add(M3);
+	C11.Add(M7).Add(M1).Add(M4).Sub(M5)
+	C12.Add(M5).Add(M3)
+	C21.Add(M4).Add(M2)
+	C22.Add(M6).Add(M1).Sub(M2).Add(M3)
 	return C
 }

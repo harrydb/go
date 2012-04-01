@@ -35,7 +35,7 @@ func (A *Matrix) Add(B *Matrix) *Matrix {
 func (C *Matrix) Plus(A, B *Matrix) *Matrix  {
 
 	// Normal matrices.
-	if A.stride == A.width && B.stride == B.width {
+	if A.stride == A.width && B.stride == B.width && C.stride == C.width {
 		for i, ai := range A.data {
 			C.data[i] = ai + B.data[i]
 		}
@@ -43,11 +43,11 @@ func (C *Matrix) Plus(A, B *Matrix) *Matrix  {
 	}
 
 	// SubMatrices.
-	for i, k := 0, 0; i < A.height; i++ {
+	for i := 0; i < A.height; i++ {
 		Ai := A.Row(i)
+		Ci := C.Row(i)
 		for j, bij := range B.Row(i) {
-			C.data[k] = Ai[j] + bij
-			k++
+			Ci[j] = Ai[j] + bij
 		}
 	}
 

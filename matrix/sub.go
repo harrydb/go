@@ -36,19 +36,19 @@ func (A *Matrix) Sub(B *Matrix) *Matrix {
 func (C *Matrix) Minus(A, B *Matrix) *Matrix {
 
 	// Normal matrices.
-	if A.stride == A.width && B.stride == B.width {
-		for i, ai := range A.data {
-			C.data[i] = ai - B.data[i]
+	if A.stride == A.width && B.stride == B.width && C.stride == C.width {
+		for i, bi := range B.data {
+			C.data[i] = A.data[i] - bi
 		}
 		return C
 	}
 
 	// SubMatrices.
-	for i, k := 0, 0; i < A.height; i++ {
+	for i := 0; i < A.height; i++ {
 		Ai := A.Row(i)
+		Ci := C.Row(i)
 		for j, bij := range B.Row(i) {
-			C.data[k] = Ai[j] - bij
-			k++
+			Ci[j] = Ai[j] - bij
 		}
 	}
 	return C

@@ -9,16 +9,16 @@ import (
 	"math/rand"
 	"testing"
 	"time"
-	gomatrix "code.google.com/p/gomatrix/matrix"
-	//gomatrix "harrydb1984-gomatrix/matrix"
+	//gomatrix "code.google.com/p/gomatrix/matrix"
+	gomatrix "harrydb1984-gomatrix/matrix"
 )
 
 const ε = 10e-12
 
-func TestMulSimple(t *testing.T) {
+func TestMulNaive(t *testing.T) {
 	A := New(2, 3, []float64{1, 2, 4, 2, 1, 2})
 	B := New(3, 2, []float64{8, 4, 2, 2, 1, 0})
-	C := MulSimple(A, B)
+	C := MulNaive(A, B)
 	D := New(2, 2, []float64{16, 8, 20, 10})
 
 	if !equal(C, D, 0, t) {
@@ -30,7 +30,7 @@ func TestMulBLAS(t *testing.T) {
 	n := 200
 	A := randomMatrix(n, n)
 	B := randomMatrix(n, n)
-	C := MulSimple(A, B)
+	C := MulNaive(A, B)
 	D := MulBLAS(A, B)
 
 	if !equal(C, D, 0, t) {
@@ -42,7 +42,7 @@ func TestMulStrassen(t *testing.T) {
 	n := 200
 	A := randomMatrix(n, n)
 	B := randomMatrix(n, n)
-	C := MulSimple(A, B)
+	C := MulNaive(A, B)
 	D := MulStrassen(A, B)
 
 	if !equal(C, D, ε, t) {
@@ -57,7 +57,20 @@ func TestMulStrassenPar(t *testing.T) {
 	C := MulStrassen(A, B)
 	D := MulStrassenPar(A, B)
 
-	if !equal(C, D, 0, t) {
+	if !equal(C, D, ε, t) {
+		t.FailNow()
+	}
+}
+
+func TestMulWinograd(t *testing.T) {
+	rand.Seed(1)
+	n := 200
+	A := randomMatrix(n, n)
+	B := randomMatrix(n, n)
+	C := MulStrassen(A, B)
+	D := MulWinograd(A, B)
+
+	if !equal(C, D, ε, t) {
 		t.FailNow()
 	}
 }
@@ -66,8 +79,20 @@ func TestMulDouglas(t *testing.T) {
 	n := 200
 	A := randomMatrix(n, n)
 	B := randomMatrix(n, n)
-	C := MulSimple(A, B)
+	C := MulNaive(A, B)
 	D := MulDouglas(A, B)
+
+	if !equal(C, D, ε, t) {
+		t.FailNow()
+	}
+}
+
+func TestMulHuss(t *testing.T) {
+	n := 200
+	A := randomMatrix(n, n)
+	B := randomMatrix(n, n)
+	C := MulNaive(A, B)
+	D := MulHuss(A, B)
 
 	if !equal(C, D, ε, t) {
 		t.FailNow()
@@ -80,7 +105,7 @@ func TestGomatrix(t *testing.T) {
 	A := gomatrix.MakeDenseMatrix(a.data, a.height, a.width)
 	b := randomMatrix(n, n)
 	B := gomatrix.MakeDenseMatrix(b.data, b.height, b.width)
-	C := MulSimple(a, b)
+	C := MulNaive(a, b)
 	D, _ := A.TimesDense(B)
 
 	for i := 0; i < n; i++ {
@@ -105,7 +130,46 @@ func BenchmarkMulDouglas__1024(bench *testing.B) {
     }
 }
 
-func BenchmarkMulStrassPar1024(bench *testing.B) {
+func BenchmarkMulHuss_____1024(bench *testing.B) {
+	bench.StopTimer()
+	rand.Seed(time.Now().Unix())
+	n := 1024
+	A := randomMatrix(n, n)
+	B := randomMatrix(n, n)
+	bench.StartTimer()
+
+	for i := 0; i < bench.N; i++ {
+		MulHuss(A, B)
+    }
+}
+
+func BenchmarkMulWinograd_1024(bench *testing.B) {
+	bench.StopTimer()
+	rand.Seed(time.Now().Unix())
+	n := 1024
+	A := randomMatrix(n, n)
+	B := randomMatrix(n, n)
+	bench.StartTimer()
+
+	for i := 0; i < bench.N; i++ {
+		MulWinograd(A, B)
+    }
+}
+
+func BenchmarkMulStrassen_1024(bench *testing.B) {
+	bench.StopTimer()
+	rand.Seed(time.Now().Unix())
+	n := 1024
+	A := randomMatrix(n, n)
+	B := randomMatrix(n, n)
+	bench.StartTimer()
+
+	for i := 0; i < bench.N; i++ {
+		MulStrassen(A, B)
+    }
+}
+
+func BenchmarkMulStrasPar_1024(bench *testing.B) {
 	bench.StopTimer()
 	rand.Seed(time.Now().Unix())
 	n := 1024
@@ -200,7 +264,7 @@ func BenchmarkMulBLAS______512(bench *testing.B) {
     }
 }
 
-func BenchmarkMulSimple____512(bench *testing.B) {
+func BenchmarkMulNaive____512(bench *testing.B) {
 	bench.StopTimer()
 	rand.Seed(time.Now().Unix())
 	n := 512
@@ -209,7 +273,7 @@ func BenchmarkMulSimple____512(bench *testing.B) {
 	bench.StartTimer()
 
 	for i := 0; i < bench.N; i++ {
-		MulSimple(A, B)
+		MulNaive(A, B)
     }
 }
 
@@ -223,6 +287,19 @@ func BenchmarkMulDouglas___256(bench *testing.B) {
 
 	for i := 0; i < bench.N; i++ {
 		MulDouglas(A, B)
+    }
+}
+
+func BenchmarkMulHuss______256(bench *testing.B) {
+	bench.StopTimer()
+	rand.Seed(time.Now().Unix())
+	n := 256
+	A := randomMatrix(n, n)
+	B := randomMatrix(n, n)
+	bench.StartTimer()
+
+	for i := 0; i < bench.N; i++ {
+		MulHuss(A, B)
     }
 }
 
@@ -280,7 +357,7 @@ func BenchmarkMulGomatrix__256(bench *testing.B) {
     }
 }
 
-func BenchmarkMulSimple____256(bench *testing.B) {
+func BenchmarkMulNaive____256(bench *testing.B) {
 	bench.StopTimer()
 	rand.Seed(time.Now().Unix())
 	n := 256
@@ -289,7 +366,7 @@ func BenchmarkMulSimple____256(bench *testing.B) {
 	bench.StartTimer()
 
 	for i := 0; i < bench.N; i++ {
-		MulSimple(A, B)
+		MulNaive(A, B)
     }
 }
 
@@ -360,7 +437,7 @@ func BenchmarkMulGomatrix__128(bench *testing.B) {
     }
 }
 
-func BenchmarkMulSimple____128(bench *testing.B) {
+func BenchmarkMulNaive____128(bench *testing.B) {
 	bench.StopTimer()
 	rand.Seed(time.Now().Unix())
 	n := 128
@@ -369,7 +446,7 @@ func BenchmarkMulSimple____128(bench *testing.B) {
 	bench.StartTimer()
 
 	for i := 0; i < bench.N; i++ {
-		MulSimple(A, B)
+		MulNaive(A, B)
 	}
 }
 
@@ -401,7 +478,7 @@ func BenchmarkMulGomatrix___64(bench *testing.B) {
     }
 }
 
-func BenchmarkMulSimple_____64(bench *testing.B) {
+func BenchmarkMulNaive_____64(bench *testing.B) {
 	bench.StopTimer()
 	rand.Seed(time.Now().Unix())
 	n := 64
@@ -410,7 +487,7 @@ func BenchmarkMulSimple_____64(bench *testing.B) {
 	bench.StartTimer()
 
 	for i := 0; i < bench.N; i++ {
-		MulSimple(A, B)
+		MulNaive(A, B)
 	}
 }
 
@@ -442,7 +519,7 @@ func BenchmarkMulGomatrix___32(bench *testing.B) {
     }
 }
 
-func BenchmarkMulSimple_____32(bench *testing.B) {
+func BenchmarkMulNaive_____32(bench *testing.B) {
 	bench.StopTimer()
 	rand.Seed(time.Now().Unix())
 	n := 32
@@ -451,6 +528,6 @@ func BenchmarkMulSimple_____32(bench *testing.B) {
 	bench.StartTimer()
 
 	for i := 0; i < bench.N; i++ {
-		MulSimple(A, B)
+		MulNaive(A, B)
 	}
 }

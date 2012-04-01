@@ -51,7 +51,7 @@ func (A *Matrix) Clear() {
 func (A *Matrix) Copy(B *Matrix) {
 
 	// Normal matrices.
-	if B.stride == B.width {
+	if A.stride == A.width && B.stride == B.width {
 		copy(A.data, B.data)
 		return
 	}

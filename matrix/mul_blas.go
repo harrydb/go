@@ -7,6 +7,8 @@ package matrix
 import "github.com/ziutek/blas"
 
 // MulBLAS returns A * B.
+//
+// Performance of this implementation is improved by using level 1 BLAS functions.
 func MulBLAS(A, B *Matrix) *Matrix {
 	return Zeros(A.height, B.width).MulAddBLAS(A, B)
 }

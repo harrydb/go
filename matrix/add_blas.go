@@ -11,8 +11,6 @@ func PlusBLAS(A, B *Matrix) *Matrix {
 	return Zeros(A.height, A.width).PlusBLAS(A, B)
 }
 
-
-
 // Add calculates A = A + B and returns A.
 func (A *Matrix) AddBLAS(B *Matrix) *Matrix {
 
@@ -30,26 +28,10 @@ func (A *Matrix) AddBLAS(B *Matrix) *Matrix {
 	return A
 }
 
-
-// Copy the contents of B to A.
-func (A *Matrix) CopyBLAS(B *Matrix) {
-
-	// Normal matrices.
-	if B.stride == B.width {
-		blas.Dcopy(len(A.data), B.data, 1, A.data, 1)
-		return
-	}
-
-	// Submatrices.
-	for i := 0; i < A.height; i++ {
-		blas.Dcopy(A.width, B.Row(i), 1, A.Row(i), 1)
-	}
-}
-
 // Plus calculates C = A + B and returns C.
 func (C *Matrix) PlusBLAS(A, B *Matrix) *Matrix {
 	if C != B {
-		C.CopyBLAS(B)
+		C.Copy(B)
 	}
 	return C.AddBLAS(A)
 }
