@@ -189,14 +189,20 @@ func decodeRawGray16(r io.Reader, c PNMConfig) (image.Image, error) {
 
 func decodeRawRGB(r io.Reader, c PNMConfig) (image.Image, error) {
 	m := image.NewRGBA(image.Rect(0, 0, c.Width, c.Height))
-	count := len(m.Pix)
-	for i := 0; i < count; i += 4 {
-		pixel := m.Pix[i : i+3]
-		m.Pix[i+3] = 0xff
+	pixLen := c.Width * c.Height
+	rgbLen := pixLen * 3
 
-		if _, err := io.ReadFull(r, pixel); err != nil {
-			return nil, err
-		}
+	// Do a large read for the rgb data.
+	if _, err := io.ReadFull(r, m.Pix[0:rgbLen]); err != nil {
+		return nil, err
+	}
+
+	// Repack to RGBA form.
+	for i := pixLen - 1; i >= 0; i-- {
+		m.Pix[i*4] = m.Pix[i*3]
+		m.Pix[i*4+1] = m.Pix[i*3+1]
+		m.Pix[i*4+2] = m.Pix[i*3+2]
+		m.Pix[i*4+3] = 0xff
 	}
 
 	return m, nil
