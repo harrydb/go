@@ -199,10 +199,10 @@ func decodeRawRGB(r io.Reader, c PNMConfig) (image.Image, error) {
 
 	// Repack to RGBA form.
 	for i := pixLen - 1; i >= 0; i-- {
-		m.Pix[i*4] = m.Pix[i*3]
-		m.Pix[i*4+1] = m.Pix[i*3+1]
-		m.Pix[i*4+2] = m.Pix[i*3+2]
 		m.Pix[i*4+3] = 0xff
+		m.Pix[i*4+2] = m.Pix[i*3+2]
+		m.Pix[i*4+1] = m.Pix[i*3+1]
+		m.Pix[i*4] = m.Pix[i*3]
 	}
 
 	return m, nil
@@ -406,11 +406,11 @@ func DecodeConfig(r io.Reader) (image.Config, error) {
 }
 
 func init() {
-	image.RegisterFormat("pbm plain", "P1", Decode, DecodeConfig)
-	image.RegisterFormat("pgm plain", "P2", Decode, DecodeConfig)
-	image.RegisterFormat("ppm plain", "P3", Decode, DecodeConfig)
-	image.RegisterFormat("pbm raw", "P4", Decode, DecodeConfig)
-	image.RegisterFormat("pgm raw", "P5", Decode, DecodeConfig)
-	image.RegisterFormat("ppm raw", "P6", Decode, DecodeConfig)
+	image.RegisterFormat("pbm ascii (black/white)", "P1", Decode, DecodeConfig)
+	image.RegisterFormat("pgm ascii (grayscale)", "P2", Decode, DecodeConfig)
+	image.RegisterFormat("ppm ascii (rgb)", "P3", Decode, DecodeConfig)
+	image.RegisterFormat("pbm raw (black/white)", "P4", Decode, DecodeConfig)
+	image.RegisterFormat("pgm raw (grayscale)", "P5", Decode, DecodeConfig)
+	image.RegisterFormat("ppm raw (rgb)", "P6", Decode, DecodeConfig)
 	//image.RegisterFormat("pam", "P7", Decode, DecodeConfig)
 }
