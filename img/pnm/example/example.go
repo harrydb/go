@@ -2,22 +2,24 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package pnm_test
+package main
 
 import (
+	"github.com/harrydb/go/img/pnm"
 	"image"
 	"log"
 	"os"
-	"github.com/harrydb/go/img/pnm"
 )
 
-func Example() {
+func Main() {
 	file, err := os.Open("in.ppm")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	img, err := image.Decode(file)
+	img, format, err := image.Decode(file)
+
+	log.Println("Format: ", format)
 
 	if err != nil {
 		log.Fatal(err)
