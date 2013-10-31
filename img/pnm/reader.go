@@ -398,7 +398,7 @@ func DecodeConfig(r io.Reader) (image.Config, error) {
 	var cm color.Model
 	switch c.magic {
 	case "P1", "P4":
-		cm = color.GrayModel
+		cm = bwPalette
 	case "P2", "P5":
 		if c.Maxval < 256 {
 			cm = color.GrayModel
