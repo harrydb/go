@@ -28,7 +28,6 @@ import (
 	"image"
 	"image/color"
 	"io"
-	"unicode"
 )
 
 type PNMConfig struct {
@@ -290,6 +289,14 @@ func Decode(r io.Reader) (image.Image, error) {
 	return nil, fmt.Errorf("pnm: could not decode, invalid magic value %s", c.magic[0:2])
 }
 
+func isSpace(b byte) bool {
+	switch b {
+	case ' ', '\n', '\r', '\t', '\v', '\f':
+		return true
+	}
+	return false
+}
+
 // skipComments skips all comments (and whitespace) that may occur between PNM
 // header tokens.
 //
@@ -302,7 +309,7 @@ func skipComments(r *bufio.Reader, singleSpace bool) (err error) {
 	for {
 		// Skip whitespace
 		c, err = r.ReadByte()
-		for unicode.IsSpace(rune(c)) {
+		for isSpace(c) {
 			if c, err = r.ReadByte(); err != nil {
 				return err
 			}
