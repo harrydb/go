@@ -42,7 +42,7 @@ efficient and support non-square matrices. This is not implemented.
 
 ### Documention
 
-See: https://gopkgdoc.appspot.com/pkg/github.com/harrydb/go/matrix
+See: https://godoc.org/github.com/harrydb/go/matrix
 
 
 ### Benchmarks
