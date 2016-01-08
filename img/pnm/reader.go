@@ -38,8 +38,10 @@ type PNMConfig struct {
 	magic  string
 }
 
+var bwPalette = color.Palette{color.White, color.Black}
+
 func decodePlainBW(r io.Reader, c PNMConfig) (image.Image, error) {
-	m := image.NewGray(image.Rect(0, 0, c.Width, c.Height))
+	m := image.NewPaletted(image.Rect(0, 0, c.Width, c.Height), bwPalette)
 	pixelCount := len(m.Pix)
 
 	for i := 0; i < pixelCount; i++ {
@@ -47,9 +49,9 @@ func decodePlainBW(r io.Reader, c PNMConfig) (image.Image, error) {
 			return nil, err
 		}
 		if m.Pix[i] == 0 {
-			m.Pix[i] = 255
-		} else {
 			m.Pix[i] = 0
+		} else {
+			m.Pix[i] = 1
 		}
 	}
 
@@ -139,15 +141,15 @@ func unpackByte(bit []uint8, b byte) {
 		n = 8
 	}
 	for i := 0; i < n; i++ {
-		if b&128 == 0 {
-			bit[i] = 255
+		if b&128 != 0 {
+			bit[i] = 1
 		}
 		b = b << 1
 	}
 }
 
 func decodeRawBW(r io.Reader, c PNMConfig) (image.Image, error) {
-	m := image.NewGray(image.Rect(0, 0, c.Width, c.Height))
+	m := image.NewPaletted(image.Rect(0, 0, c.Width, c.Height), bwPalette)
 
 	byteCount := c.Width / 8
 	if c.Width%8 != 0 {
@@ -396,7 +398,7 @@ func DecodeConfig(r io.Reader) (image.Config, error) {
 	var cm color.Model
 	switch c.magic {
 	case "P1", "P4":
-		cm = color.GrayModel
+		cm = bwPalette
 	case "P2", "P5":
 		if c.Maxval < 256 {
 			cm = color.GrayModel
