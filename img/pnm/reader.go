@@ -218,7 +218,7 @@ func decodeRawRGB(r io.Reader, c PNMConfig) (image.Image, error) {
 }
 
 func decodeRawRGB64(r io.Reader, c PNMConfig) (image.Image, error) {
-	m := image.NewRGBA(image.Rect(0, 0, c.Width, c.Height))
+	m := image.NewRGBA64(image.Rect(0, 0, c.Width, c.Height))
 	count := len(m.Pix)
 
 	for i := 0; i < count; i += 8 {
